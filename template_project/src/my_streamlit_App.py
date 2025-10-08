@@ -12,6 +12,8 @@ from plotly.subplots import make_subplots
 import json
 from copy import deepcopy
 
+st.set_page_config(layout="wide")
+
 # functions
 @st.cache_data
 def load_csv(path):
@@ -25,10 +27,15 @@ def load_json(path):
         return geojson
 ####
 
-#load in data
-df_internet = load_csv("template_project/data/raw/share-of-individuals-using-the-internet.csv")
+# #load in data
+# df_internet = load_csv("template_project/data/raw/share-of-individuals-using-the-internet.csv")
+# df_socioeco = px.data.gapminder()
+# geojson = load_json("template_project/data/raw/countries.geojson")
+
+df_internet = load_csv("../data/raw/share-of-individuals-using-the-internet.csv")
 df_socioeco = px.data.gapminder()
-geojson = load_json("template_project/data/raw/countries.geojson")
+geojson = load_json("../data/raw/countries.geojson")
+
 
 #rename columns to merge by country code and year
 df_socioeco = df_socioeco.rename(columns={"iso_alpha": "Code","year":"Year","country":"Country"})
@@ -42,30 +49,34 @@ df_mean_cont =  df_merged.groupby(["continent","Year"])[["gdpPercap","Individual
 df = deepcopy(df_merged)
 ##
 
-st.title("Internet usage thorught the year")
-st.header("data exploration")
-#st.table(data=df.head())
+st.title("Internet usage throughout the years")
+st.write("This app lets you explore the % of population in each country using the internet throughout the year.")
+st.write("Besides, you can explore the relationship between the internet usage and socio-economic factors")
+
 #
 
 # checkbox dataframe
-if st.sidebar.checkbox("dispay/hide"):
-       st.header("dataframe")
-       st.dataframe(df.head())
+if st.checkbox("dispay/hide data to explore"):
+       st.header("data")
+       st.dataframe(df)
 
 
 # chose year button
-years = sorted(df["Year"].unique())
+years = sorted(df_internet["Year"].unique())
 year = st.selectbox("chose year",years)
 #df_new = df[df["Year"].isin(range(1990,2021))]
 df_new = df[df["Year"]== year]
-
+df_internet = df_internet[df_internet["Year"]== year]
 
 #plot
-fig = px.choropleth(data_frame=df_new, geojson=geojson, locations="Code", featureidkey="properties.ISO_A3",
+fig = px.choropleth(data_frame=df_internet, geojson=geojson, locations="Code", featureidkey="properties.ISO_A3",
                     color="Individuals using the Internet (% of population)",
                     color_continuous_scale="Viridis",
                     animation_frame="Year")
-fig.update_layout(title="(%) of population using Internet throughout the years")
+fig.update_layout(title="(%) of population using Internet throughout the years",
+                  width=800,
+                  height=1000
+)
 
 st.plotly_chart(fig)
 
@@ -73,13 +84,11 @@ st.plotly_chart(fig)
 
 
 
-st.header("relationship between different catgeories")
+st.header("relationship between % of population using internet and different catgeories")
 # chose categ button
-categories = ["gdpPercap","Individuals using the Internet (% of population)","lifeExp","pop"]
+categories = ["gdpPercap","lifeExp","pop"]
 category1 = st.selectbox("chose category",categories, key="cat1")
 
-# chose categ button
-category2 = st.selectbox("chose category",categories, key="cat2")
 
 
 #scatterplot
@@ -91,7 +100,7 @@ fig2 = go.Figure()
 for cont in unique_conts:
     df_cont = df_mean_cont.loc[cont]
     fig2.add_trace(go.Scatter(x=df_cont[category1],
-                             y=df_cont[category2],
+                             y=df_cont["Individuals using the Internet (% of population)"],
                              name=cont,
                             ))
 
@@ -99,11 +108,13 @@ for cont in unique_conts:
 fig2.update_layout(hovermode="x unified",
                  paper_bgcolor="lightgray",
                  plot_bgcolor="white",
-                 title=f"relationship between {category1} and {category2} [years 1992-2007]",
+                 title=f"relationship between % of population using internet and {category1} [years 1992-2007]",
                  xaxis_title=category1,
-                 yaxis_title=category2,
+                 yaxis_title="Individuals using the Internet (% of population)",
                  xaxis_title_font=dict(size=18),
                  yaxis_title_font=dict(size=18),
+                 width=800,
+                 height=800
                  )
 
-st.plotly_chart(fig2)
+st.plotly_chart(fig2, use_container_width=True)

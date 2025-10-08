@@ -27,14 +27,14 @@ def load_json(path):
         return geojson
 ####
 
-# #load in data
-# df_internet = load_csv("template_project/data/raw/share-of-individuals-using-the-internet.csv")
-# df_socioeco = px.data.gapminder()
-# geojson = load_json("template_project/data/raw/countries.geojson")
-
-df_internet = load_csv("../data/raw/share-of-individuals-using-the-internet.csv")
+ #load in data
+df_internet = load_csv("template_project/data/raw/share-of-individuals-using-the-internet.csv")
 df_socioeco = px.data.gapminder()
-geojson = load_json("../data/raw/countries.geojson")
+geojson = load_json("template_project/data/raw/countries.geojson")
+
+#df_internet = load_csv("../data/raw/share-of-individuals-using-the-internet.csv")
+#df_socioeco = px.data.gapminder()
+#geojson = load_json("../data/raw/countries.geojson")
 
 
 #rename columns to merge by country code and year

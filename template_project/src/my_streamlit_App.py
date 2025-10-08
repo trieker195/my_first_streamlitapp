@@ -75,10 +75,10 @@ fig = px.choropleth(data_frame=df_internet, geojson=geojson, locations="Code", f
                     animation_frame="Year")
 fig.update_layout(title="(%) of population using Internet throughout the years",
                   width=800,
-                  height=1000
+                  height=800
 )
 
-st.plotly_chart(fig)
+st.plotly_chart(fig, use_container_width=True)
 
 ###
 

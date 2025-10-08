@@ -26,15 +26,32 @@ def load_json(path):
 ####
 
 #load in data
-df_raw = load_csv("../data/raw/share-of-individuals-using-the-internet.csv")
+df_internet = load_csv("../data/raw/share-of-individuals-using-the-internet.csv")
+df_socioeco = px.data.gapminder()
 geojson = load_json("../data/raw/countries.geojson")
-df = deepcopy(df_raw)
+
+#rename columns to merge by country code and year
+df_socioeco = df_socioeco.rename(columns={"iso_alpha": "Code","year":"Year","country":"Country"})
+df_internet = df_internet.rename(columns={"Entity": "Country","year":"Year"})
+#merge df by code and year
+df_merged = df_internet.merge(df_socioeco,on=["Code","Year","Country"],how="inner")
+
+#group by conteninten
+df_mean_cont =  df_merged.groupby(["continent","Year"])[["gdpPercap","Individuals using the Internet (% of population)","lifeExp","pop"]].mean()
+
+df = deepcopy(df_merged)
 ##
 
 st.title("Internet usage thorught the year")
 st.header("data exploration")
-st.table(data=df.head())
+#st.table(data=df.head())
 #
+
+# checkbox dataframe
+if st.sidebar.checkbox("dispay/hide"):
+       st.header("dataframe")
+       st.dataframe(df.head())
+
 
 # chose year button
 years = sorted(df["Year"].unique())
@@ -51,3 +68,42 @@ fig = px.choropleth(data_frame=df_new, geojson=geojson, locations="Code", featur
 fig.update_layout(title="(%) of population using Internet throughout the years")
 
 st.plotly_chart(fig)
+
+###
+
+
+
+st.header("relationship between different catgeories")
+# chose categ button
+categories = ["gdpPercap","Individuals using the Internet (% of population)","lifeExp","pop"]
+category1 = st.selectbox("chose category",categories, key="cat1")
+
+# chose categ button
+category2 = st.selectbox("chose category",categories, key="cat2")
+
+
+#scatterplot
+# get unique continetn names
+unique_conts = df_mean_cont.index.get_level_values(0).unique().to_list()
+
+#plot
+fig2 = go.Figure()
+for cont in unique_conts:
+    df_cont = df_mean_cont.loc[cont]
+    fig2.add_trace(go.Scatter(x=df_cont[category1],
+                             y=df_cont[category2],
+                             name=cont,
+                            ))
+
+# hover 
+fig2.update_layout(hovermode="x unified",
+                 paper_bgcolor="lightgray",
+                 plot_bgcolor="white",
+                 title=f"relationship between {category1} and {category2} [years 1992-2007]",
+                 xaxis_title=category1,
+                 yaxis_title=category2,
+                 xaxis_title_font=dict(size=18),
+                 yaxis_title_font=dict(size=18),
+                 )
+
+st.plotly_chart(fig2)
